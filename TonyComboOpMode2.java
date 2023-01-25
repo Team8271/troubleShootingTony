@@ -23,7 +23,7 @@ public class TonyComboOpMode2 extends LinearOpMode {
 
         double negLiftPow = 0;
 
-        double speedBoost = gamepad1.right_trigger/2.5;
+        double speedBoost =0;
 
         // Make sure your ID's match your configuration
         robot.init(hardwareMap);
@@ -42,12 +42,14 @@ public class TonyComboOpMode2 extends LinearOpMode {
         if (isStopRequested()) return;
 
         while (opModeIsActive()) {
+
+            speedBoost = gamepad1.right_trigger/2;
             //establish joystick variables
             double y;
             double x;
             double rx;
 
-            y = (-gamepad1.left_stick_y / 2) + speedBoost; // Remember, this is reversed therefore changed to neg!
+            y = (-gamepad1.left_stick_y / 2) - speedBoost; // Remember, joystick is reversed therefore changed to neg!
             x = ((gamepad1.left_stick_x / 2) * 1.1) + speedBoost; // Counteract imperfect strafing
             rx = (gamepad1.right_stick_x / 2) + speedBoost;
 
