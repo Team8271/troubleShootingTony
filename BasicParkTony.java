@@ -27,7 +27,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -49,13 +48,11 @@ import org.firstinspires.ftc.teamcode.TonyRobotHardware;
 
 import java.util.List;
 
-
 @Autonomous(name = "BasicParkTony-TFOD-Autos", group = "OldTony")
 //@Disabled
 public class BasicParkTony extends LinearOpMode {
     
     TonyRobotHardware robot = new TonyRobotHardware();
-
 
     private static final String TFOD_MODEL_ASSET = "PPDEC_8.tflite";
     private static final String[] LABELS = {
@@ -66,8 +63,6 @@ public class BasicParkTony extends LinearOpMode {
 
     //this string is going to return a value based on the signal cone later in the code
     String signal = null;
-
-
 
 /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
@@ -93,7 +88,6 @@ public class BasicParkTony extends LinearOpMode {
 
     private VuforiaLocalizer vuforia;
 
-
 /**
      * {@link #tfod} is the variable we will use to store our instance of the TensorFlow Object
      * Detection engine.
@@ -102,7 +96,6 @@ public class BasicParkTony extends LinearOpMode {
     private TFObjectDetector tfod;
 
     private void initVuforia() {
-
 
          /* Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
          */
@@ -117,7 +110,6 @@ public class BasicParkTony extends LinearOpMode {
 
         // Loading trackables is not necessary for the TensorFlow Object Detection engine.
     }
-
 
 /**
      * Initialize the TensorFlow Object Detection engine.
@@ -174,32 +166,45 @@ public class BasicParkTony extends LinearOpMode {
     private void Zone1() throws InterruptedException
     {
         //our robot will always start with the same opening moves, AKA, AutoOpening
-        AutoOpening();
+        //AutoOpening();
+        DriveForwardEncoder(0.4, 20);
+        SpinLeftIMU(.40,90);
+        //SpinLeftEncoder(0.4, 20);
+        //DriveForwardEncoder(0.4, 20);
         //then, depending on the picture on the signal cone, this code will continue to the correct parking space, parking zone 1
     }
 
     private void Zone2() throws InterruptedException
     {
-        AutoOpening();
+        //AutoOpening();
+        DriveForwardEncoder(0.4, 40);
         //park in zone 2
     }
 
     private void Zone3() throws InterruptedException
     {
-        AutoOpening();
+        //AutoOpening();
+        DriveForwardEncoder(0.4, 20);
+        SpinRightEncoder(0.4, 20);
+        DriveForwardEncoder(0.4, 20);
         //park in zone 3
     }
 
     private void AutoOpening() throws InterruptedException
     {
+
         // Below are the opening moves of our autonomous program.
 
-        StrafeRightEncoder(20, 10);
+/*        StrafeRightEncoder(.20,10);
         StopDrivingTime(1);
-        StrafeLeftEncoder(10,5);
-        StopDrivingTime(1);
+        StrafeLeftEncoder(.20,5);
+        StopDrivingTime(1);*/
+        DriveForwardEncoder(0.4, 20);
+        SpinLeftEncoder(0.4, 20);
 
-    /*  DriveForwardEncoder(0.4, 60);
+
+    /**  This is old AutoOpen code. needs redone.........
+     DriveForwardEncoder(0.4, 60);
         DriveLift(1, 1750);
             StopDrivingTime(1);
         SpinLeftIMU(0.3, 45);
@@ -231,7 +236,8 @@ public class BasicParkTony extends LinearOpMode {
         initVuforia();
         initTfod();
         robot.init(hardwareMap);
-
+        //initialize pods down
+        SetPodsDown();
 
 /**
          * Activate TensorFlow Object Detection before we wait for the start command.
@@ -277,6 +283,8 @@ public class BasicParkTony extends LinearOpMode {
             while (opModeIsActive()) {
 
                 liftHold();
+                //lower pods
+                SetPodsDown();
 
                 getRawHeading();
 
@@ -473,9 +481,12 @@ public class BasicParkTony extends LinearOpMode {
         robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }*/
 
-
     public void StrafeRightEncoder(double power, int pos) throws InterruptedException
     {
+        //reset encoder
+        //robot.backEncoder ?? how to reset it's not a motor like below
+        //robot.backEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         //set encoder targets
         //convert pos inches to ticks
         int ticks = pos * (int)robot.COUNTS_PER_INCH;
@@ -493,8 +504,8 @@ public class BasicParkTony extends LinearOpMode {
         {
             liftHold(); //hold arm in place while moving
 
-            telemetry.addData("Target", newBackTarget);
-            telemetry.addData("backEncoder", robot.backEncoder.getCurrentPosition());
+            telemetry.addData("Target", newBackTarget/robot.COUNTS_PER_INCH);
+            telemetry.addData("backEncoder", robot.backEncoder.getCurrentPosition()/robot.COUNTS_PER_INCH);
             telemetry.update();
         }
 
@@ -517,12 +528,12 @@ public class BasicParkTony extends LinearOpMode {
         robot.backLeft.setPower(power);
 
 
-        while((robot.leftEncoder.getCurrentPosition() > newBackTarget) && opModeIsActive())
+        while((robot.backEncoder.getCurrentPosition() > newBackTarget) && opModeIsActive())
         {
             liftHold();
 
-            telemetry.addData("leftEncoderPos", robot.leftEncoder.getCurrentPosition());
-            telemetry.addData("rightEncoderPos", robot.rightEncoder.getCurrentPosition());
+            telemetry.addData("Target", newBackTarget/robot.COUNTS_PER_INCH);
+            telemetry.addData("backEncoder", robot.backEncoder.getCurrentPosition()/robot.COUNTS_PER_INCH);
             telemetry.update();
         }
 
@@ -572,7 +583,9 @@ public class BasicParkTony extends LinearOpMode {
             liftHold();
 
             telemetry.addData("leftEncoderPos", robot.leftEncoder.getCurrentPosition());
+            telemetry.addData("Target", newLeftTarget);
             telemetry.addData("rightEncoderPos", robot.rightEncoder.getCurrentPosition());
+            telemetry.addData("Target", newRightTarget);
             telemetry.update();
         }
 
@@ -693,6 +706,13 @@ public class BasicParkTony extends LinearOpMode {
         robot.liftR.setPower(0);
     }
     //endregion*//*
+
+    public void SetPodsDown()
+    {
+        robot.podLeft.setPosition(0.7); // 0.7 is down
+        robot.podRight.setPosition(0); // 0 is down
+        robot.podBack.setPosition(1); // 0.4 is down
+    }
 
 }
 
