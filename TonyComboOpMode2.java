@@ -1,12 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "TonyComboOpMode", group = "OldTony")
+@TeleOp(name = "TonyComboOpMode2", group = "OldTony")
 //@Disabled
 public class TonyComboOpMode2 extends LinearOpMode {
 
@@ -27,6 +28,8 @@ public class TonyComboOpMode2 extends LinearOpMode {
 
         // Make sure your ID's match your configuration
         robot.init(hardwareMap);
+
+        PodsUp();
 
         // Initialize IMU here as the hardware Class uses DEGREES and RADIANS are used here.
         //Hardware could be cleaned up, but currently Auto programs use DEGREES
@@ -49,9 +52,9 @@ public class TonyComboOpMode2 extends LinearOpMode {
             double x;
             double rx;
 
-            y = (-gamepad1.left_stick_y / 2) - speedBoost; // Remember, joystick is reversed therefore changed to neg!
-            x = ((gamepad1.left_stick_x / 2) * 1.1) + speedBoost; // Counteract imperfect strafing
-            rx = (gamepad1.right_stick_x / 2) + speedBoost;
+            y = (-gamepad1.left_stick_y /2); // Remember, joystick is reversed therefore changed to neg!
+            x = (gamepad1.left_stick_x /2); // Counteract imperfect strafing
+            rx = (gamepad1.right_stick_x /2);
 
             // Read inverse (neg in front) IMU heading, as the IMU heading is CW positive
             double botHeading = -imu.getAngularOrientation().firstAngle;
@@ -70,10 +73,11 @@ public class TonyComboOpMode2 extends LinearOpMode {
             double frontRightPower = (rotY - rotX - rx) / denominator;
             double backRightPower = (rotY + rotX - rx) / denominator;
 
-            robot.frontLeft.setPower(frontLeftPower );
-            robot.backLeft.setPower(backLeftPower );
-            robot.frontRight.setPower(frontRightPower);
-            robot.backRight.setPower(backRightPower );
+            //Set motor power using Boost method (calculatedPower +- speedBoost)
+            robot.frontLeft.setPower(Boost(frontLeftPower,speedBoost));
+            robot.backLeft.setPower(Boost(backLeftPower,speedBoost));
+            robot.frontRight.setPower(Boost(frontRightPower,speedBoost));
+            robot.backRight.setPower(Boost(backRightPower,speedBoost));
 
             /**********************************************
                         END OF CHASSIS CONTROL
@@ -151,9 +155,50 @@ public class TonyComboOpMode2 extends LinearOpMode {
             }
     //endregion
 
+            /**TESTING PODS positioning
+             * ********************************
+             */
+            if(gamepad2.dpad_down) {
+                robot.podLeft.setPosition(0.7); // 0.7 is down
+                robot.podRight.setPosition(0.0); // 0 is down
+                robot.podBack.setPosition(0.0); // 0.4 is down
+            }
+            if(gamepad2.dpad_up) {
+                robot.podLeft.setPosition(0.0); //
+                robot.podRight.setPosition(0.9); //
+                robot.podBack.setPosition(0.9); //
+            }
+
             //display debug telemetry
             telemetry.addData("heading",(int)botHeading);
             telemetry.update();
         }
     }
+
+    /**
+     *
+     * @METHODS USED IN CODE ABOVE
+     */
+    //speedboost method
+    public double Boost(double iMotorPower, double boostVal)
+    {
+        //determine if calculated power is pos/neg
+        //to determine whether to add or subtract Boost value
+        //returns double
+        if(iMotorPower < 0){
+            return iMotorPower -boostVal;
+        }
+        else
+        {
+            return iMotorPower + boostVal;
+        }
+    }
+
+    public void PodsUp(){
+        robot.podLeft.setPosition(0.0); //
+        robot.podRight.setPosition(0.9); //
+        robot.podBack.setPosition(0.9); //
+    }
+
+
 }
