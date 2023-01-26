@@ -44,6 +44,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
+import java.util.Base64;
+
 public class TonyRobotHardware {
 
     /* Declare OpMode members. */
@@ -136,6 +138,10 @@ public class TonyRobotHardware {
         rightEncoder = new Encoder(hwMap.get(DcMotorEx.class, "encoderRight"));
         backEncoder = new Encoder(hwMap.get(DcMotorEx.class, "FR"));
 
+        podLeft = hwMap.servo.get("podL");
+        podRight = hwMap.servo.get("podR");
+        podBack = hwMap.servo.get("podB");
+
         // Define and Initialize Motors
         frontLeft = hwMap.get(DcMotor.class, "FL");
         frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -149,11 +155,16 @@ public class TonyRobotHardware {
         backRight = hwMap.get(DcMotor.class, "BR");
         backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        //Define and Initialize Lift motors
         liftL = hwMap.get(DcMotor.class, "liftL");
         liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         liftR = hwMap.get(DcMotor.class, "liftR");
         liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        //BRAKE behavior does not appear to work.
        // liftR.setMode(DcMotor.ZeroPowerBehavior.BRAKE);
        // liftL.setMode(DcMotor.ZeroPowerBehavior.BRAKE);
 
