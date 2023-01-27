@@ -146,18 +146,26 @@ public class BasicParkTony extends LinearOpMode {
 
 
                         //If returns squiggly lines
-                        if (signal.equals("C")) {
-                            Zone1();
+                        if (signal.equals("C")) { //RedWaves go left
+                            //Zone1();
+                            AutoOpening();
+                            StopDrivingTime(500);
+                            StrafeLeftEncoder(0.8, 20);
                         }
 
                         //If returns green hooks
-                        else if (signal.equals("B")) {
-                            Zone2();
+                        else if (signal.equals("B")) { //GreenHooks stay center
+                            //Zone2();
+                            AutoOpening();
+                            StopDrivingTime(500);
                         }
 
                         //If returns blue circles
-                        else if (signal.equals("A")){
-                            Zone3();
+                        else if (signal.equals("A")){ //BlueDots go right
+                            //Zone3();
+                            AutoOpening();
+                            StopDrivingTime(500);
+                            StrafeRightEncoder(0.8, 20);
                         }
                 }
 
@@ -169,7 +177,7 @@ public class BasicParkTony extends LinearOpMode {
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
 
                     if (updatedRecognitions != null) {
-                        telemetry.addData("# Object Detected", updatedRecognitions.size());
+                        telemetry.addData("# Object Detected", updatedRecognitions.label());
 
                         // step through the list of recognitions and display label info.
                         int i = 0;
@@ -612,41 +620,35 @@ public class BasicParkTony extends LinearOpMode {
     //region analyze signal
     public String analyzeSignal()
     {
-        if(tfod != null)
-        {
-            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
 
-            if(updatedRecognitions != null)
-            {
-                for (Recognition recognition : updatedRecognitions)
-                {
-                    if(recognition.getConfidence() > .70)
-                    {
-                        if(recognition.getLabel().equals("bd"))
-                        {
-                            //return blue circles
-                            return "A";
+                if (tfod != null) {
+                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
 
-                        }
-                        else if(recognition.getLabel().equals("gh"))
-                        {
-                            //return green hook shapes
-                            return "B";
+                    if (updatedRecognitions != null) {
+                        for (Recognition recognition : updatedRecognitions) {
+                            if (recognition.getConfidence() > .70) {
+                                if (recognition.getLabel().equals("bd")) {
+                                    //return blue circles
+                                    return "A";
+
+                                } else if (recognition.getLabel().equals("gh")) {
+                                    //return green hook shapes
+                                    return "B";
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }
         //if the signal cone displays neither green hooks nor the blue circles, assume it's the red squiggly lines!
         return "C";
-    }//endregion
+    }//end analyze
 
     //Depending on the return of the signal, we will call these three methods (see lines 325-345.)
     private void Zone1() throws InterruptedException
     {
         //our robot will always start with the same opening moves, AKA, AutoOpening
         AutoOpening();
-        StopDrivingTime(500);
+
         StrafeLeftEncoder(.8,20);
         //StopDrivingTime(500);
         //SpinLeftEncoder(0.4, 20);
