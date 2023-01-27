@@ -121,18 +121,17 @@ public class BasicParkTony extends LinearOpMode {
 
         }
 
+        //lower pods
+        SetPodsDown();
 /**************************************************************************
          *  Wait for the game to begin
          *  *******************************/
 
-        telemetry.addData(">", "Press Play to start op mode");
+        telemetry.addData(">", "Pods down, ready to play");
         telemetry.update();
         waitForStart();
 
-
                 liftHold();
-                //lower pods
-                SetPodsDown();
 
                 getRawHeading();
 
@@ -620,26 +619,32 @@ public class BasicParkTony extends LinearOpMode {
     //region analyze signal
     public String analyzeSignal()
     {
+        waitTime.reset();
 
-                if (tfod != null) {
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+        if (tfod != null) {
+            while (opModeIsActive() && waitTime.milliseconds() < 3000) {
+                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
 
-                    if (updatedRecognitions != null) {
-                        for (Recognition recognition : updatedRecognitions) {
-                            if (recognition.getConfidence() > .70) {
-                                if (recognition.getLabel().equals("bd")) {
-                                    //return blue circles
-                                    return "A";
+                if (updatedRecognitions != null) {
+                    for (Recognition recognition : updatedRecognitions) {
+                        if (recognition.getConfidence() > .70) {
+                            if (recognition.getLabel().equals("bd")) {
+                                //return blue circles park right
+                                return "A";
 
-                                } else if (recognition.getLabel().equals("gh")) {
-                                    //return green hook shapes
-                                    return "B";
-                                }
+                            } else if (recognition.getLabel().equals("gh")) {
+                                //return green hook shapes park center
+                                return "B";
+                            } else if (recognition.getLabel().equals("rw")) {
+                                // return red squiggly lines park left
+                                return "C";
                             }
                         }
                     }
                 }
-        //if the signal cone displays neither green hooks nor the blue circles, assume it's the red squiggly lines!
+            }
+        }
+        //if we get here then we failed to see anything so just assume it's the red squiggly lines!
         return "C";
     }//end analyze
 
@@ -676,7 +681,7 @@ public class BasicParkTony extends LinearOpMode {
     private void AutoOpening() throws InterruptedException
     {
         DriveForwardEncoder(0.4, 23);
-        StopDrivingTime(1000);
+        //StopDrivingTime(1000);
 
         /**  This is old AutoOpen code. needs redone.........
          DriveForwardEncoder(0.4, 60);
