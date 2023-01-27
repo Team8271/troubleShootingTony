@@ -138,7 +138,7 @@ public class BasicParkTony extends LinearOpMode {
             {
                 for (Recognition recognition : updatedRecognitions)
                 {
-                    if(recognition.getConfidence() > .89)
+                    if(recognition.getConfidence() > .75)
                     {
                         if(recognition.getLabel().equals("bd"))
                         {
@@ -166,9 +166,9 @@ public class BasicParkTony extends LinearOpMode {
     private void Zone1() throws InterruptedException
     {
         //our robot will always start with the same opening moves, AKA, AutoOpening
-        //AutoOpening();
-        DriveForwardEncoder(0.4, 20);
-        SpinLeftIMU(.40,90);
+        AutoOpening();
+        StrafeLeftEncoder(.8,20);
+        //StopDrivingTime(500);
         //SpinLeftEncoder(0.4, 20);
         //DriveForwardEncoder(0.4, 20);
         //then, depending on the picture on the signal cone, this code will continue to the correct parking space, parking zone 1
@@ -176,17 +176,16 @@ public class BasicParkTony extends LinearOpMode {
 
     private void Zone2() throws InterruptedException
     {
-        //AutoOpening();
-        DriveForwardEncoder(0.4, 40);
+        AutoOpening();
+        //StopDrivingTime(500);
         //park in zone 2
     }
 
     private void Zone3() throws InterruptedException
     {
-        //AutoOpening();
-        DriveForwardEncoder(0.4, 20);
-        SpinRightEncoder(0.4, 20);
-        DriveForwardEncoder(0.4, 20);
+        AutoOpening();
+        StrafeRightEncoder(0.8, 20);
+        //StopDrivingTime(500);
         //park in zone 3
     }
 
@@ -195,12 +194,8 @@ public class BasicParkTony extends LinearOpMode {
 
         // Below are the opening moves of our autonomous program.
 
-/*        StrafeRightEncoder(.20,10);
-        StopDrivingTime(1);
-        StrafeLeftEncoder(.20,5);
-        StopDrivingTime(1);*/
-        DriveForwardEncoder(0.4, 20);
-        SpinLeftEncoder(0.4, 20);
+        DriveForwardEncoder(0.4, 23);
+        //StopDrivingTime(500);
 
 
     /**  This is old AutoOpen code. needs redone.........
@@ -357,8 +352,8 @@ public class BasicParkTony extends LinearOpMode {
         robot.headingError = robot.targetHeading - robot.robotHeading;
 
         // Normalize the error to be within +/- 180 degrees
-        while (robot.headingError > 180)  robot.headingError -= 360;
-        while (robot.headingError <= -180) robot.headingError += 360;
+        while (robot.headingError > 180 && opModeIsActive())  robot.headingError -= 360;
+        while (robot.headingError <= -180 && opModeIsActive()) robot.headingError += 360;
 
         // Multiply the error by the gain to determine the required steering correction/  Limit the result to +/- 1.0
         return Range.clip(robot.headingError * proportionalGain, -1, 1);
@@ -376,7 +371,7 @@ public class BasicParkTony extends LinearOpMode {
         robot.frontLeft.setPower(power);
         robot.backLeft.setPower(power);
 
-        while(getRawHeading() > robot.targetHeading)
+        while(getRawHeading() > robot.targetHeading && opModeIsActive())
         {
             liftHold();
 
@@ -406,7 +401,7 @@ public class BasicParkTony extends LinearOpMode {
         robot.frontLeft.setPower(-power);
         robot.backLeft.setPower(-power);
 
-        while(getRawHeading() < robot.targetHeading)
+        while(getRawHeading() < robot.targetHeading && opModeIsActive())
         {
             liftHold();
 
@@ -442,7 +437,7 @@ public class BasicParkTony extends LinearOpMode {
         waitTime.reset();
         waitTime.startTime();
 
-        while(waitTime.time() < time)
+        while(waitTime.time() < time && opModeIsActive())
         {
             //keep the lift in current position
             liftHold();
@@ -486,6 +481,7 @@ public class BasicParkTony extends LinearOpMode {
         //reset encoder
         //robot.backEncoder ?? how to reset it's not a motor like below
         //robot.backEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        // When tony goes right, the back encoder value increases
 
         //set encoder targets
         //convert pos inches to ticks
@@ -495,8 +491,8 @@ public class BasicParkTony extends LinearOpMode {
         int newBackTarget = robot.backEncoder.getCurrentPosition() + ticks;
 
         //turn motors on for a RightStrafe
-        robot.frontRight.setPower(power);
-        robot.backRight.setPower(-power);
+        robot.frontRight.setPower(-power);
+        robot.backRight.setPower(power);
         robot.frontLeft.setPower(power);
         robot.backLeft.setPower(-power);
                                             ///    > to <
@@ -517,13 +513,14 @@ public class BasicParkTony extends LinearOpMode {
     public void StrafeLeftEncoder(double power, int pos) throws InterruptedException
     {
         //readyEncoders(pos);
+        // When tony goes left, the back encoder value decreases
 
         int ticks = pos * (int)robot.COUNTS_PER_INCH;
 
         int newBackTarget = robot.backEncoder.getCurrentPosition() - ticks;
 
-        robot.frontRight.setPower(-power);
-        robot.backRight.setPower(power);
+        robot.frontRight.setPower(power);
+        robot.backRight.setPower(-power);
         robot.frontLeft.setPower(-power);
         robot.backLeft.setPower(power);
 
@@ -673,7 +670,7 @@ public class BasicParkTony extends LinearOpMode {
         robot.armMotor.setTargetPosition(pos);
         robot.armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.armMotor.setPower(power);
-        while (robot.armMotor.isBusy()) {
+        while (robot.armMotor.isBusy() && opModeIsActive()) {
             telemetry.addData("armPos", robot.armMotor.getCurrentPosition());
             telemetry.update();
         }
@@ -711,7 +708,7 @@ public class BasicParkTony extends LinearOpMode {
     {
         robot.podLeft.setPosition(0.7); // 0.7 is down
         robot.podRight.setPosition(0); // 0 is down
-        robot.podBack.setPosition(1); // 0.4 is down
+        robot.podBack.setPosition(0.38); // 0.4 is down
     }
 
 }
