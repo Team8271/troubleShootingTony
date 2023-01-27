@@ -1,0 +1,17 @@
+        signal = analyzeSignal();
+        {
+            //If returns squiggly lines
+            if (signal.equals("C")) {
+                Zone1();
+            }
+
+            //If returns green hooks
+            else if (signal.equals("B")) {
+                Zone2();
+            }
+
+            //If returns blue circles
+            else if (signal.equals("A")){
+                Zone3();
+            }
+        }
