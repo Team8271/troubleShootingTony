@@ -143,20 +143,24 @@ public class BasicParkTony extends LinearOpMode {
                     telemetry.addData("Zone: ", signal);
                     telemetry.update();
 
-
+/**
+ * ********************Run desired zone code ****************************************************
+ */
                         //If returns squiggly lines
                         if (signal.equals("C")) { //RedWaves go left
                             //Zone1();
                             AutoOpening();
                             StopDrivingTime(500);
-                            StrafeLeftEncoder(0.8, 20);
+                            StrafeLeftEncoder(0.9, 40);
                         }
 
                         //If returns green hooks
                         else if (signal.equals("B")) { //GreenHooks stay center
                             //Zone2();
                             AutoOpening();
+                            DriveForwardEncoder(60, 10);
                             StopDrivingTime(500);
+                            SpinRightIMU(60,90);
                         }
 
                         //If returns blue circles
@@ -164,7 +168,7 @@ public class BasicParkTony extends LinearOpMode {
                             //Zone3();
                             AutoOpening();
                             StopDrivingTime(500);
-                            StrafeRightEncoder(0.8, 20);
+                            StrafeRightEncoder(0.9, 40);
                         }
                 }
 
@@ -308,9 +312,8 @@ public class BasicParkTony extends LinearOpMode {
     public void StopDrivingTime(long time)  throws InterruptedException
     {
         waitTime.reset();
-        waitTime.startTime();
-
-        while(waitTime.time() < time && opModeIsActive())
+        // the not running program was due to a time vs milliseconds() call
+        while(waitTime.milliseconds() < time && opModeIsActive())
         {
             //keep the lift in current position
             liftHold();
@@ -622,7 +625,9 @@ public class BasicParkTony extends LinearOpMode {
         waitTime.reset();
 
         if (tfod != null) {
+            //loop needed here with an escape after short waitTime in case no label is ID'd
             while (opModeIsActive() && waitTime.milliseconds() < 3000) {
+
                 List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
 
                 if (updatedRecognitions != null) {
@@ -648,7 +653,9 @@ public class BasicParkTony extends LinearOpMode {
         return "C";
     }//end analyze
 
-    //Depending on the return of the signal, we will call these three methods (see lines 325-345.)
+    //Depending on the return of the signal, we will call these three methods
+    //**  NOTE these zones are not being used. Desired movement is coded directly into
+    //**       the signal identification at the top (line: 142). They could be reinstated, but don't have to
     private void Zone1() throws InterruptedException
     {
         //our robot will always start with the same opening moves, AKA, AutoOpening
