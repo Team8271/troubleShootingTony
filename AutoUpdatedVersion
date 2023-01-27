@@ -142,8 +142,9 @@ public class BasicParkTony extends LinearOpMode {
                     //analyzeSignal returns the string "A,B or C" depending on what image was recognized
                     signal = analyzeSignal();
                     telemetry.addData("Zone: ", signal);
+                    telemetry.update();
 
-                    {
+
                         //If returns squiggly lines
                         if (signal.equals("C")) {
                             Zone1();
@@ -158,9 +159,9 @@ public class BasicParkTony extends LinearOpMode {
                         else if (signal.equals("A")){
                             Zone3();
                         }
-                    }
+                }
 
-                    telemetry.update();
+
 
 /* **** I believe this part is a duplicate that is already performed in "analyze"
                    // getUpdatedRecognitions() will return null if no new information is available since
@@ -175,10 +176,10 @@ public class BasicParkTony extends LinearOpMode {
                         for (Recognition recognition : updatedRecognitions) {
                             telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
                             i++;}*/
-                    }
+
                 }
-            
-        
+
+
         //endregion
 
 /***********************************************
@@ -307,6 +308,9 @@ public class BasicParkTony extends LinearOpMode {
             //keep the lift in current position
             liftHold();
 
+            telemetry.addData("Stopped: ", time);
+            telemetry.update();
+
             robot.frontRight.setPower(0);
             robot.frontLeft.setPower(0);
             robot.backRight.setPower(0);
@@ -419,8 +423,11 @@ public class BasicParkTony extends LinearOpMode {
         {
             liftHold();
 
+            telemetry.addData("Zone: ", signal);
             telemetry.addData("leftEncoderPos", robot.leftEncoder.getCurrentPosition());
+            telemetry.addData("Target", newLeftTarget);
             telemetry.addData("rightEncoderPos", robot.rightEncoder.getCurrentPosition());
+            telemetry.addData("Target", newRightTarget);
             telemetry.update();
         }
 
@@ -444,6 +451,7 @@ public class BasicParkTony extends LinearOpMode {
         {
             liftHold();
 
+            telemetry.addData("Zone: ", signal);
             telemetry.addData("leftEncoderPos", robot.leftEncoder.getCurrentPosition());
             telemetry.addData("Target", newLeftTarget);
             telemetry.addData("rightEncoderPos", robot.rightEncoder.getCurrentPosition());
@@ -612,7 +620,7 @@ public class BasicParkTony extends LinearOpMode {
             {
                 for (Recognition recognition : updatedRecognitions)
                 {
-                    if(recognition.getConfidence() > .89)
+                    if(recognition.getConfidence() > .70)
                     {
                         if(recognition.getLabel().equals("bd"))
                         {
@@ -638,6 +646,7 @@ public class BasicParkTony extends LinearOpMode {
     {
         //our robot will always start with the same opening moves, AKA, AutoOpening
         AutoOpening();
+        StopDrivingTime(500);
         StrafeLeftEncoder(.8,20);
         //StopDrivingTime(500);
         //SpinLeftEncoder(0.4, 20);
@@ -648,26 +657,24 @@ public class BasicParkTony extends LinearOpMode {
     private void Zone2() throws InterruptedException
     {
         AutoOpening();
-        //StopDrivingTime(500);
+        StopDrivingTime(500);
         //park in zone 2
     }
 
     private void Zone3() throws InterruptedException
     {
         AutoOpening();
+        StopDrivingTime(500);
         StrafeRightEncoder(0.8, 20);
-        //StopDrivingTime(500);
+
         //park in zone 3
     }
 
+    // Opening moves of our autonomous program for ALL zones
     private void AutoOpening() throws InterruptedException
     {
-
-        // Below are the opening moves of our autonomous program.
-
         DriveForwardEncoder(0.4, 23);
-        //StopDrivingTime(500);
-
+        StopDrivingTime(1000);
 
         /**  This is old AutoOpen code. needs redone.........
          DriveForwardEncoder(0.4, 60);
