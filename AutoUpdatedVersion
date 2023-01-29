@@ -44,13 +44,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
-import org.firstinspires.ftc.teamcode.TonyRobotHardware;
 
 import java.util.List;
 
-@Autonomous(name = "BasicParkTony-TFOD-Autos", group = "OldTony")
+@Autonomous(name = "TonyStack", group = "Comp")
 //@Disabled
-public class BasicParkTony extends LinearOpMode {
+public class TonyStack extends LinearOpMode {
     
     TonyRobotHardware robot = new TonyRobotHardware();
 
@@ -80,7 +79,6 @@ public class BasicParkTony extends LinearOpMode {
     private static final String VUFORIA_KEY =
             "Ad/WJUD/////AAABmaHL2VlsskF7gs94CBhc85VMCMsnduT4r56lJ6R1ADz06l0nCXlkYHuEr/9MViHanSiKcefbD5RMEKuNSbMTOmC8JGbEkiQB5a+kE/JDCayLu/0cAj7+y4wkNo2v4YtJlr1YJ5HCLZ1Rzv007cx4S+NbSv3TSxZUQzomnBbZIc/3uLx5S0Sr3eood8gq7xRVTwXh0Rp9GJk+my8sz87vJyg+nZlWXa3q5WzuS0YRq2F5XMDMH1opYjN3Ub+0xFIZO82tBSBQfAMGLruFRyjQ7qpVgPra19wu8PldMmHoGHPdQgT+G6iAGCjClGpcnPtZMXw1VycsGRyjH4pBSH12J5HIheL9b/BTvvBwelC+0FeC";
 
-
 /**
      * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
      * localization engine.
@@ -96,7 +94,6 @@ public class BasicParkTony extends LinearOpMode {
     private TFObjectDetector tfod;
 
 
-
     @Override
     public void runOpMode() throws InterruptedException {
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
@@ -106,9 +103,11 @@ public class BasicParkTony extends LinearOpMode {
 
         //Initialize hardware
         robot.init(hardwareMap);
+
         //initialize pods down
         SetPodsDown();
-
+        liftHold();
+        swingArmHold();
 /**
          * Activate TensorFlow Object Detection before we wait for the start command.
          * Do it here so that the Camera Stream window will have the TensorFlow annotations visible.
@@ -121,8 +120,7 @@ public class BasicParkTony extends LinearOpMode {
 
         }
 
-        //lower pods
-        SetPodsDown();
+
 /**************************************************************************
          *  Wait for the game to begin
          *  *******************************/
@@ -131,11 +129,11 @@ public class BasicParkTony extends LinearOpMode {
         telemetry.update();
         waitForStart();
 
-                liftHold();
+        liftHold();
+        swingArmHold();
+        getRawHeading();
 
-                getRawHeading();
-
-                telemetry.addData("Hold Pos: ", liftRHoldPos);
+                telemetry.addData("Hold Pos: ", robot.liftRHoldPos);
 
                 if (tfod != null) {
                     //analyzeSignal returns the string "A,B or C" depending on what image was recognized
@@ -144,54 +142,27 @@ public class BasicParkTony extends LinearOpMode {
                     telemetry.update();
 
 /**
- * ********************Run desired zone code ****************************************************
+ * ********************Run desired zone code *****************************************************************
+ * ****************REMEMBER POWER IS DECIMAL 0.0 TO 1.0  NOT 20 *************************************
  */
                         //If returns squiggly lines
-                        if (signal.equals("C")) { //RedWaves go left
-                            //Zone1();
-                            AutoOpening();
-                            StopDrivingTime(500);
-                            StrafeLeftEncoder(0.9, 40);
+                        if (signal.equals("A")) { //RedWaves go left parking zone1
+                            Zone1();
                         }
 
                         //If returns green hooks
-                        else if (signal.equals("B")) { //GreenHooks stay center
-                            //Zone2();
-                            AutoOpening();
-                            DriveForwardEncoder(60, 10);
-                            StopDrivingTime(500);
-                            SpinRightIMU(60,90);
+                        else if (signal.equals("B")) { //GreenHooks stay center parking zone2
+                            Zone2();
                         }
 
                         //If returns blue circles
-                        else if (signal.equals("A")){ //BlueDots go right
-                            //Zone3();
-                            AutoOpening();
-                            StopDrivingTime(500);
-                            StrafeRightEncoder(0.9, 40);
+                        else if (signal.equals("C")){ //BlueDots go rightparking zone3
+                            Zone3();
                         }
                 }
 
+        }//END runOpMode
 
-
-/* **** I believe this part is a duplicate that is already performed in "analyze"
-                   // getUpdatedRecognitions() will return null if no new information is available since
-                    // the last time that call was made.
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-
-                    if (updatedRecognitions != null) {
-                        telemetry.addData("# Object Detected", updatedRecognitions.label());
-
-                        // step through the list of recognitions and display label info.
-                        int i = 0;
-                        for (Recognition recognition : updatedRecognitions) {
-                            telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                            i++;}*/
-
-                }
-
-
-        //endregion
 
 /***********************************************
      *      METHODS FOR         !!!!!!
@@ -238,75 +209,35 @@ public class BasicParkTony extends LinearOpMode {
         return Range.clip(robot.headingError * proportionalGain, -1, 1);
     }
 
-    public void SpinRightIMU(double power, float angle) throws InterruptedException
-    {
-        resetHeading();
 
-        //add 10 to -angle to fix overcorrection
-        robot.targetHeading = -angle + 10;
-
-        robot.frontRight.setPower(-power);
-        robot.backRight.setPower(-power);
-        robot.frontLeft.setPower(power);
-        robot.backLeft.setPower(power);
-
-        while(getRawHeading() > robot.targetHeading && opModeIsActive())
-        {
-            liftHold();
-
-            getRawHeading();
-
-            getSteeringCorrection(robot.P_TURN_GAIN, robot.robotHeading);
-
-
-            telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", robot.targetHeading, getRawHeading());
-            telemetry.update();
-        }
-
-        //turn motor power to 0
-        StopDriving();
-
-    }
-
-    public void SpinLeftIMU(double power, float angle) throws InterruptedException
-    {
-        resetHeading();
-
-        //subtract 10 from angle to fix overcorrection
-        robot.targetHeading = angle - 10;
-
-        robot.frontRight.setPower(power);
-        robot.backRight.setPower(power);
-        robot.frontLeft.setPower(-power);
-        robot.backLeft.setPower(-power);
-
-        while(getRawHeading() < robot.targetHeading && opModeIsActive())
-        {
-            liftHold();
-
-            getRawHeading();
-
-           getSteeringCorrection(robot.P_TURN_GAIN, robot.robotHeading);
-
-
-            telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", robot.targetHeading, getRawHeading());
-            telemetry.update();
-        }
-
-        //turn motor power to 0
-        StopDriving();
-
-    }//endregion
-
-/**      ENCODER       **/
+/***************************************************************
+ * *********************DRIVE METHODS
+ *  ***********************************************************/
 
     //region encoder drive
-    public void StopDriving()
+    public void StopDriving() throws InterruptedException
     {
+        swingArmHold();
+
+        liftHold();
+
         robot.frontRight.setPower(0);
         robot.backRight.setPower(0);
         robot.frontLeft.setPower(0);
         robot.backLeft.setPower(0);
+
+        robot.FLhold = robot.frontLeft.getCurrentPosition();
+        robot.frontLeft.setPower((double)(robot.FLhold - robot.frontLeft.getCurrentPosition()) / robot.slopeVal);
+
+        robot.FRhold = robot.frontRight.getCurrentPosition();
+        robot.frontRight.setPower((double)(robot.FRhold - robot.frontRight.getCurrentPosition()) / robot.slopeVal);
+
+        robot.BLhold = robot.backLeft.getCurrentPosition();
+        robot.backLeft.setPower((double)(robot.BLhold - robot.backLeft.getCurrentPosition()) / robot.slopeVal);
+
+        robot.BRhold = robot.backRight.getCurrentPosition();
+        robot.backRight.setPower((double)(robot.BRhold - robot.backRight.getCurrentPosition()) / robot.slopeVal);
+
     }
 
     public void StopDrivingTime(long time)  throws InterruptedException
@@ -318,6 +249,8 @@ public class BasicParkTony extends LinearOpMode {
             //keep the lift in current position
             liftHold();
 
+            swingArmHold();
+
             telemetry.addData("Stopped: ", time);
             telemetry.update();
 
@@ -328,88 +261,32 @@ public class BasicParkTony extends LinearOpMode {
         }
     }
 
+    /**
+     *
+     * DRIVE Forward/Backward
+     */
 
-/** Strafe w/Encoders only when using motor encoders not dead wheel encoders
-        private void readyEncoders(int pos) {
-
-        //The code below was used with Motor Encoders
-
-        robot.frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //robot.frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        robot.frontRight.setTargetPosition(pos);
-        robot.backRight.setTargetPosition(pos);
-        //robot.frontLeft.setTargetPosition(pos);
-        robot.backLeft.setTargetPosition(pos);
-
-        robot.frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //robot.frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        robot.frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //robot.frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }*/
-
-    public void StrafeRightEncoder(double power, int pos) throws InterruptedException
+    public void DriveForwardEncoder(double power, int pos) throws InterruptedException
     {
-        //reset encoder
-        //robot.backEncoder ?? how to reset it's not a motor like below
-        //robot.backEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        // When tony goes right, the back encoder value increases
-
-        //set encoder targets
-        //convert pos inches to ticks
         int ticks = pos * (int)robot.COUNTS_PER_INCH;
-        //add/sub (depending on direction) ticks to the current encoder value
-        // possibly use absolute values for a change in encoder vs pos/neg direction values??
-        int newBackTarget = robot.backEncoder.getCurrentPosition() + ticks;
-
-        //turn motors on for a RightStrafe
-        robot.frontRight.setPower(-power);
-        robot.backRight.setPower(power);
-        robot.frontLeft.setPower(power);
-        robot.backLeft.setPower(-power);
-                                            ///    > to <
-        while((robot.backEncoder.getCurrentPosition() < newBackTarget) && opModeIsActive())
-        {
-            liftHold(); //hold arm in place while moving
-
-            telemetry.addData("Target", newBackTarget/robot.COUNTS_PER_INCH);
-            telemetry.addData("backEncoder", robot.backEncoder.getCurrentPosition()/robot.COUNTS_PER_INCH);
-            telemetry.update();
-        }
-
-        //turn motor power to 0
-        StopDriving();
-
-    }
-
-    public void StrafeLeftEncoder(double power, int pos) throws InterruptedException
-    {
-        //readyEncoders(pos);
-        // When tony goes left, the back encoder value decreases
-
-        int ticks = pos * (int)robot.COUNTS_PER_INCH;
-
-        int newBackTarget = robot.backEncoder.getCurrentPosition() - ticks;
+        int newLeftTarget = robot.leftEncoder.getCurrentPosition() + ticks;
+        int newRightTarget = robot.rightEncoder.getCurrentPosition() + ticks;
 
         robot.frontRight.setPower(power);
-        robot.backRight.setPower(-power);
-        robot.frontLeft.setPower(-power);
+        robot.backRight.setPower(power);
+        robot.frontLeft.setPower(power);
         robot.backLeft.setPower(power);
 
-
-        while((robot.backEncoder.getCurrentPosition() > newBackTarget) && opModeIsActive())
+        while((robot.leftEncoder.getCurrentPosition() < newLeftTarget && robot.rightEncoder.getCurrentPosition() < newRightTarget) && opModeIsActive())
         {
             liftHold();
+            swingArmHold();
 
-            telemetry.addData("Target", newBackTarget/robot.COUNTS_PER_INCH);
-            telemetry.addData("backEncoder", robot.backEncoder.getCurrentPosition()/robot.COUNTS_PER_INCH);
+            telemetry.addData("Zone: ", signal);
+            telemetry.addData("leftEncoderPos", robot.leftEncoder.getCurrentPosition());
+            telemetry.addData("Target", newLeftTarget);
+            telemetry.addData("rightEncoderPos", robot.rightEncoder.getCurrentPosition());
+            telemetry.addData("Target", newRightTarget);
             telemetry.update();
         }
 
@@ -432,6 +309,7 @@ public class BasicParkTony extends LinearOpMode {
         while((robot.leftEncoder.getCurrentPosition() > newLeftTarget && robot.rightEncoder.getCurrentPosition() > newRightTarget) && opModeIsActive())
         {
             liftHold();
+            swingArmHold();
 
             telemetry.addData("Zone: ", signal);
             telemetry.addData("leftEncoderPos", robot.leftEncoder.getCurrentPosition());
@@ -445,27 +323,65 @@ public class BasicParkTony extends LinearOpMode {
         StopDriving();
 
     }
-
-    public void DriveForwardEncoder(double power, int pos) throws InterruptedException
+    /**
+     * STRAFE METHODS
+     */
+   public void StrafeRightEncoder(double power, int pos) throws InterruptedException
     {
-        int ticks = pos * (int)robot.COUNTS_PER_INCH;
-        int newLeftTarget = robot.leftEncoder.getCurrentPosition() + ticks;
-        int newRightTarget = robot.rightEncoder.getCurrentPosition() + ticks;
+        //reset encoder
+        //robot.backEncoder ?? how to reset it's not a motor like below
+        //robot.backEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        // When tony goes right, the back encoder value increases
 
-        robot.frontRight.setPower(power);
+        //set encoder targets
+        //convert pos inches to ticks
+        int ticks = pos * (int)robot.COUNTS_PER_INCH;
+        //add/sub (depending on direction) ticks to the current encoder value
+        // possibly use absolute values for a change in encoder vs pos/neg direction values??
+        int newBackTarget = robot.backEncoder.getCurrentPosition() + ticks;
+
+        //turn motors on for a RightStrafe
+        robot.frontRight.setPower(-power);
         robot.backRight.setPower(power);
         robot.frontLeft.setPower(power);
-        robot.backLeft.setPower(power);
-
-        while((robot.leftEncoder.getCurrentPosition() < newLeftTarget && robot.rightEncoder.getCurrentPosition() < newRightTarget) && opModeIsActive())
+        robot.backLeft.setPower(-power);
+                                            ///    > to <
+        while((robot.backEncoder.getCurrentPosition() < newBackTarget) && opModeIsActive())
         {
             liftHold();
+            swingArmHold();
 
-            telemetry.addData("Zone: ", signal);
-            telemetry.addData("leftEncoderPos", robot.leftEncoder.getCurrentPosition());
-            telemetry.addData("Target", newLeftTarget);
-            telemetry.addData("rightEncoderPos", robot.rightEncoder.getCurrentPosition());
-            telemetry.addData("Target", newRightTarget);
+            telemetry.addData("Target", newBackTarget/robot.COUNTS_PER_INCH);
+            telemetry.addData("backEncoder", robot.backEncoder.getCurrentPosition()/robot.COUNTS_PER_INCH);
+            telemetry.update();
+        }
+
+        //turn motor power to 0
+        StopDriving();
+
+    }
+    public void StrafeLeftEncoder(double power, int pos) throws InterruptedException
+    {
+        //readyEncoders(pos);
+        // When tony goes left, the back encoder value decreases
+
+        int ticks = pos * (int)robot.COUNTS_PER_INCH;
+
+        int newBackTarget = robot.backEncoder.getCurrentPosition() - ticks;
+
+        robot.frontRight.setPower(power);
+        robot.backRight.setPower(-power);
+        robot.frontLeft.setPower(-power);
+        robot.backLeft.setPower(power);
+
+
+        while((robot.backEncoder.getCurrentPosition() > newBackTarget) && opModeIsActive())
+        {
+            liftHold();
+            swingArmHold();
+
+            telemetry.addData("Target", newBackTarget/robot.COUNTS_PER_INCH);
+            telemetry.addData("backEncoder", robot.backEncoder.getCurrentPosition()/robot.COUNTS_PER_INCH);
             telemetry.update();
         }
 
@@ -474,24 +390,32 @@ public class BasicParkTony extends LinearOpMode {
 
     }
 
-    public void SpinRightEncoder(double power, int pos) throws InterruptedException
+    /**
+     * SPIN METHODS
+     */
+    public void SpinRightIMU(double power, float angle) throws InterruptedException
     {
-        //750 is a 90 degree left turn
-        int ticks = pos * (int)robot.COUNTS_PER_INCH;
-        int newLeftTarget = robot.leftEncoder.getCurrentPosition() + ticks;
-        int newRightTarget = robot.rightEncoder.getCurrentPosition() - ticks;
+        resetHeading();
+
+        //add 10 to -angle to fix overcorrection
+        robot.targetHeading = -angle + 10;
 
         robot.frontRight.setPower(-power);
         robot.backRight.setPower(-power);
         robot.frontLeft.setPower(power);
         robot.backLeft.setPower(power);
 
-        while(robot.leftEncoder.getCurrentPosition() < newLeftTarget && robot.rightEncoder.getCurrentPosition() > newRightTarget && opModeIsActive())
+        while(getRawHeading() > robot.targetHeading && opModeIsActive())
         {
             liftHold();
+            swingArmHold();
 
-            telemetry.addData("rightEncoderPos", robot.rightEncoder.getCurrentPosition());
-            telemetry.addData("leftEncoderPos", robot.leftEncoder.getCurrentPosition());
+            getRawHeading();
+
+            getSteeringCorrection(robot.P_TURN_GAIN, robot.robotHeading);
+
+
+            telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", robot.targetHeading, getRawHeading());
             telemetry.update();
         }
 
@@ -500,6 +424,37 @@ public class BasicParkTony extends LinearOpMode {
 
     }
 
+    public void SpinLeftIMU(double power, float angle) throws InterruptedException
+    {
+        resetHeading();
+
+
+        //subtract 10 from angle to fix overcorrection
+        robot.targetHeading = angle - 10;
+
+        robot.frontRight.setPower(power);
+        robot.backRight.setPower(power);
+        robot.frontLeft.setPower(-power);
+        robot.backLeft.setPower(-power);
+
+        while(getRawHeading() < robot.targetHeading && opModeIsActive())
+        {
+            liftHold();
+            swingArmHold();
+
+            getRawHeading();
+
+            getSteeringCorrection(robot.P_TURN_GAIN, robot.robotHeading);
+
+
+            telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", robot.targetHeading, getRawHeading());
+            telemetry.update();
+        }
+
+        //turn motor power to 0
+        StopDriving();
+
+    }//endregion
     public void SpinLeftEncoder(double power, int pos) throws InterruptedException
     {
         //-750 is a 90 degree right turn
@@ -524,11 +479,8 @@ public class BasicParkTony extends LinearOpMode {
         //turn motor power to 0
         StopDriving();
     }
-    //endregion
 
-
-
-/**      ARM & HAND       **//*
+/**      ARM & HAND  METHODS     **//*
 */
     //region Arm & Hand Functions
     public void openPalms() throws InterruptedException
@@ -554,15 +506,23 @@ public class BasicParkTony extends LinearOpMode {
             telemetry.addData("armPos", robot.armMotor.getCurrentPosition());
             telemetry.update();
         }
+        robot.armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+    public void swingArmHold() {
+
+        robot.armHoldpos = robot.armMotor.getCurrentPosition();
+        robot.armMotor.setPower((double)(robot.armHoldpos - robot.armMotor.getCurrentPosition()) / robot.slopeVal);
     }
 
-    int liftRHoldPos;
+
 
     public void liftHold() throws InterruptedException
     {
+        robot.liftRHoldPos = robot.liftR.getCurrentPosition();
+
         //set BOTH of them to the lift L hold pos to avoid accidentally running them both at different values
-        robot.liftL.setPower((double)(liftRHoldPos - robot.liftR.getCurrentPosition()) / robot.slopeVal);
-        robot.liftR.setPower((double)(liftRHoldPos - robot.liftR.getCurrentPosition()) / robot.slopeVal);
+        robot.liftL.setPower((double)(robot.liftRHoldPos - robot.liftR.getCurrentPosition()) / robot.slopeVal);
+        robot.liftR.setPower((double)(robot.liftRHoldPos - robot.liftR.getCurrentPosition()) / robot.slopeVal);
     }
 
     public void DriveLift(double power, int pos)
@@ -574,10 +534,12 @@ public class BasicParkTony extends LinearOpMode {
         {
             robot.liftL.setPower(power);
             robot.liftR.setPower(power);
+
+            swingArmHold();
         }
 
-        //update arm hold position
-        liftRHoldPos = pos;
+        //update lift hold position
+        robot.liftRHoldPos = pos;
 
         robot.liftL.setPower(0);
         robot.liftR.setPower(0);
@@ -589,6 +551,11 @@ public class BasicParkTony extends LinearOpMode {
         robot.podLeft.setPosition(0.7); // 0.7 is down
         robot.podRight.setPosition(0); // 0 is down
         robot.podBack.setPosition(0.38); // 0.4 is down
+    }
+    public void PodsUp(){
+        robot.podLeft.setPosition(0.0); //
+        robot.podRight.setPosition(0.9); //
+        robot.podBack.setPosition(0.9); //
     }
     private void initVuforia() {
 
@@ -620,13 +587,18 @@ public class BasicParkTony extends LinearOpMode {
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
     }//endregion
     //region analyze signal
+
+    /**
+     * Change the wait time?
+     * @return
+     */
     public String analyzeSignal()
     {
         waitTime.reset();
 
         if (tfod != null) {
             //loop needed here with an escape after short waitTime in case no label is ID'd
-            while (opModeIsActive() && waitTime.milliseconds() < 3000) {
+            while (opModeIsActive() && waitTime.milliseconds() < 500) {
 
                 List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
 
@@ -635,22 +607,22 @@ public class BasicParkTony extends LinearOpMode {
                         if (recognition.getConfidence() > .70) {
                             if (recognition.getLabel().equals("bd")) {
                                 //return blue circles park right
-                                return "A";
+                                return "C";
 
                             } else if (recognition.getLabel().equals("gh")) {
                                 //return green hook shapes park center
                                 return "B";
                             } else if (recognition.getLabel().equals("rw")) {
                                 // return red squiggly lines park left
-                                return "C";
+                                return "A";
                             }
                         }
                     }
                 }
             }
         }
-        //if we get here then we failed to see anything so just assume it's the red squiggly lines!
-        return "C";
+        //if we get here then we failed to see anything
+        return "A";
     }//end analyze
 
     //Depending on the return of the signal, we will call these three methods
@@ -660,35 +632,69 @@ public class BasicParkTony extends LinearOpMode {
     {
         //our robot will always start with the same opening moves, AKA, AutoOpening
         AutoOpening();
+        StopDrivingTime(500);
 
-        StrafeLeftEncoder(.8,20);
-        //StopDrivingTime(500);
-        //SpinLeftEncoder(0.4, 20);
-        //DriveForwardEncoder(0.4, 20);
-        //then, depending on the picture on the signal cone, this code will continue to the correct parking space, parking zone 1
+        //need to adjust based on where it is after AutoOpening
+        //StrafeLeftEncoder(0.7, 20);
+
+        PodsUp();
     }
 
     private void Zone2() throws InterruptedException
     {
         AutoOpening();
         StopDrivingTime(500);
-        //park in zone 2
+
+        //need to adjust based on where it is after AutoOpening
+        //
+
+        PodsUp();
     }
 
     private void Zone3() throws InterruptedException
     {
         AutoOpening();
         StopDrivingTime(500);
-        StrafeRightEncoder(0.8, 20);
 
         //park in zone 3
+        //needs figured
+        //StrafeRightEncoder(0.8, 20);
+
+        PodsUp();
     }
 
     // Opening moves of our autonomous program for ALL zones
     private void AutoOpening() throws InterruptedException
     {
-        DriveForwardEncoder(0.4, 23);
-        //StopDrivingTime(1000);
+        closePalms();
+        swingArmHold();
+        //drive 36"
+            DriveForwardEncoder(0.4, 24);
+
+        //raise lift
+        DriveLift(1, 2700);
+
+        //turn left 45
+        //SpinLeftIMU(0.8, 100);
+        SpinLeftEncoder(0.8,-750);
+
+        StopDrivingTime(500);
+        //forward 6
+        DriveForwardEncoder(0.4, 8);
+        //lower lift 4in
+        DriveLift(1, -900);
+        //openPalms
+        openPalms();
+        //backup 6in
+
+        //turn right 45
+
+        //lift down
+        DriveLift(0.3, 100);
+
+
+
+        //
 
         /**  This is old AutoOpen code. needs redone.........
          DriveForwardEncoder(0.4, 60);
